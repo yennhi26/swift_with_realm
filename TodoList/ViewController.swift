@@ -17,10 +17,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var todoList: Results<TodoItem> {
         get {
+            print(realm.objects(TodoItem.self))
             return realm.objects(TodoItem.self)
         }
     }
-    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,14 +40,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
         cell.textLabel!.text = item.detail
         
-        cell.detailTextLabel!.text = "\(item.status)"
-            
+        let accessory: UITableViewCell.AccessoryType = (item.status != 0) ? .checkmark : .none
+        
+        cell.accessoryType = accessory
+        
         return cell
     
       }
       
       func numberOfSections(in tableView: UITableView) -> Int {
-        return todoList.count
+        return 1
       }
 
       func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -92,6 +94,41 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
         present(alertController, animated: true, completion: nil)
 
+    }
+    
+    
+    // Toggle status
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let item = todoList[indexPath.row]
+        try! self.realm.write({
+            if (item.status == 0){
+                item.status = 1
+            }else{
+                item.status = 0
+            }
+        })
+        tableView.reloadRows(at: [indexPath], with: .automatic)
+    }
+    
+    
+    // Delete
+    
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+
+        if (editingStyle == .delete){
+            let item = todoList[indexPath.row]
+            try! self.realm.write({
+                self.realm.delete(item)
+            })
+
+            tableView.deleteRows(at:[indexPath], with: .automatic)
+
+        }
     }
 }
 
